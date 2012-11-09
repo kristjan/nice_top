@@ -24,6 +24,11 @@ options_parser = OptionParser.new do |opts|
     @options.blog = blog
   end
 
+  opts.on("-q QUERY", "--query QUERY",
+          "Specify search query when using --source wallbase") do |query|
+    @options.query = query
+  end
+
   opts.on_tail("-h", "--help",
           "Print usage and options") do
     p opts
@@ -72,18 +77,20 @@ end
 
 WALLBASE_ROOT = "http://wallbase.cc/search"
 
-def get_random_from_wallbase
+def get_random_from_wallbase(query)
   results = HTTParty.post(WALLBASE_ROOT, {
     :body => {
+      :query   => query,
       :orderby => :random,
       :res_opt => :gteq,
-      :res => '2560x1600',
-      :aspect => 1.6,
-      :thpp => 20
+      :res     => '2560x1600',
+      :aspect  => 1.6,
+      :thpp    => 20
     }
   })
   doc = Nokogiri::HTML(results.body)
-  doc.css('.thumb a.thlink').first.attributes["href"]
+  thumbnail_link = doc.css('.thumb a.thlink').first
+  thumbnail_link.attributes["href"] if thumbnail_link
 end
 
 WALLBASE_MIXER =
@@ -119,8 +126,12 @@ def get_image_from_wallbase_detail(detail_url)
   decode_wallbase(encoded)
 end
 
-def get_from_wallbase
-  detail_url = get_random_from_wallbase
+def get_from_wallbase(query)
+  detail_url = get_random_from_wallbase(query)
+  unless detail_url
+    puts "Nothing found for #{query}"
+    exit
+  end
   image_url = get_image_from_wallbase_detail(detail_url)
   set_desktop_from_url(image_url)
 end
@@ -131,7 +142,7 @@ def get_from(source)
     raise OptionParser::MissingArgument.new("--blog") unless @options.blog
     get_from_tumblr(@options.blog)
   when :wallbase
-    get_from_wallbase
+    get_from_wallbase(@options.query)
   else
     puts "Unknown source: #{source}"
     exit
