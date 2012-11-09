@@ -1,3 +1,6 @@
+NiceTop downloads nice images from the internet and sets them to be your desktop
+wallpaper. You can snag images either from a Tumblr blog or Wallbase.
+
 Usage: ./nice_top.rb -s SOURCE [options]
     -s, --source SOURCE              Select source (tumblr, wallbase)
     -h, --help                       Print usage and options
