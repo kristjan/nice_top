@@ -2,6 +2,7 @@
 
 require "rubygems"
 require "httparty"
+require "nokogiri"
 
 require "optparse"
 require "ostruct"
@@ -13,8 +14,8 @@ options_parser = OptionParser.new do |opts|
 
   opts.separator ""
 
-  opts.on("-s SOURCE", "--source SOURCE", [:tumblr],
-          "Select source (tumblr)") do |source|
+  opts.on("-s SOURCE", "--source SOURCE", [:tumblr, :wallbase],
+          "Select source (tumblr, wallbase)") do |source|
     @options.source = source
   end
 
@@ -55,11 +56,11 @@ def set_desktop_from_url(url)
   set_desktop(file.path)
 end
 
-TUMBLR_API_BASE = "https://api.tumblr.com/v2"
+TUMBLR_API_ROOT = "https://api.tumblr.com/v2"
 
 def get_from_tumblr(blog)
   blog += '.tumblr.com' unless blog.include?('.')
-  posts = TUMBLR_API_BASE + "/blog/#{blog}/posts"
+  posts = TUMBLR_API_ROOT + "/blog/#{blog}/posts"
   photos = HTTParty.get(posts, {
     :query => {
       :api_key => ENV["TUMBLR_API_KEY"],
@@ -71,11 +72,68 @@ def get_from_tumblr(blog)
   set_desktop_from_url(photo_url)
 end
 
+WALLBASE_ROOT = "http://wallbase.cc/search"
+
+def get_random_from_wallbase
+  results = HTTParty.post(WALLBASE_ROOT, {
+    :body => {
+      :orderby => :random,
+      :res_opt => :gteq,
+      :res => '2560x1600',
+      :aspect => 1.6,
+      :thpp => 20
+    }
+  })
+  doc = Nokogiri::HTML(results.body)
+  doc.css('.thumb a.thlink').first.attributes["href"]
+end
+
+WALLBASE_MIXER =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+def decode_wallbase(encoded)
+  result = []
+
+  encoded.chars.each_slice(4) do |group|
+    f, g, h, i = group.map{|char| WALLBASE_MIXER.index(char)}
+
+    j = f << 18 | g << 12 | h << 6 | i
+    c = j >> 16 & 255
+    d = j >> 8 & 255
+    e = j & 255
+
+    if h == 64
+      result.push c
+    elsif i == 64
+      result.push c, d
+    else
+      result.push c, d, e
+    end
+  end
+
+  result.map(&:chr).join
+end
+
+def get_image_from_wallbase_detail(detail_url)
+  detail = HTTParty.get(detail_url)
+  doc = Nokogiri::HTML(detail)
+  script = doc.css('#bigwall').to_s
+  encoded = script.match(/B\('([^']+)'\)/)[1]
+  decode_wallbase(encoded)
+end
+
+def get_from_wallbase
+  detail_url = get_random_from_wallbase
+  image_url = get_image_from_wallbase_detail(detail_url)
+  set_desktop_from_url(image_url)
+end
+
 def get_from(source)
   case source
   when :tumblr
     raise OptionParser::MissingArgument.new("--blog") unless @options.blog
     get_from_tumblr(@options.blog)
+  when :wallbase
+    get_from_wallbase
   else
     puts "Unknown source: #{source}"
     exit
