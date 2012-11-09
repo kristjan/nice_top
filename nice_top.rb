@@ -14,35 +14,40 @@ require "tempfile"
 options_parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{__FILE__} -s SOURCE [options]"
 
-  opts.separator ""
-
   opts.on("-s SOURCE", "--source SOURCE", [:tumblr, :wallbase],
           "Select source (tumblr, wallbase)") do |source|
     @options.source = source
   end
 
-  opts.on("-b BLOG", "--blog BLOG",
-          "Tumblr blog URL when using --source tumblr") do |blog|
-    @options.blog = blog
-  end
-
-  opts.on("-q QUERY", "--query QUERY",
-          "Specify search query when using --source wallbase") do |query|
-    @options.query = query
-  end
-
-  opts.on("--allow-nsfw", "Allow NSFW images from --source wallbase") do
-    @options.wallbase_sketch_level = "110"
-  end
-
-  opts.on("--nsfw", "Return only NSFW images from --source wallbase") do
-    @options.wallbase_sketch_level = "010"
-  end
-
-  opts.on_tail("-h", "--help",
+  opts.on("-h", "--help",
           "Print usage and options") do
     p opts
     exit
+  end
+
+  opts.separator ""
+  opts.separator "Tumblr options:"
+
+  opts.on("-b BLOG", "--blog BLOG",
+          "Tumblr blog URL") do |blog|
+    @options.blog = blog
+  end
+
+  opts.separator ""
+  opts.separator "Wallbase options:"
+
+
+  opts.on("-q QUERY", "--query QUERY",
+          "Specify search query") do |query|
+    @options.query = query
+  end
+
+  opts.on("--allow-nsfw", "Allow NSFW images") do
+    @options.wallbase_sketch_level = "110"
+  end
+
+  opts.on("--nsfw", "Get only NSFW images") do
+    @options.wallbase_sketch_level = "010"
   end
 
   opts.parse!
