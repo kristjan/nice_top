@@ -48,7 +48,10 @@ options_parser = OptionParser.new do |opts|
   opts.parse!
 end
 
-raise OptionParser::MissingArgument.new("--source") unless @options.source
+unless @options.source
+  p options_parser
+  exit
+end
 
 SET_DESKTOP = <<-SCRIPT
   on run argv
