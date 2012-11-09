@@ -5,6 +5,7 @@ require "httparty"
 
 require "optparse"
 require "ostruct"
+require "tempfile"
 
 @options = OpenStruct.new
 options_parser = OptionParser.new do |opts|
@@ -48,6 +49,12 @@ def set_desktop(image_path)
   `osascript #{args} #{image_path}`
 end
 
+def set_desktop_from_url(url)
+  file = Tempfile.new('nice_top')
+  `curl -s #{url} > #{file.path}`
+  set_desktop(file.path)
+end
+
 TUMBLR_API_BASE = "https://api.tumblr.com/v2"
 
 def get_from_tumblr(blog)
@@ -61,13 +68,7 @@ def get_from_tumblr(blog)
   })["response"]["posts"].first["photos"]
 
   photo_url = photos.first["original_size"]["url"]
-  name = photo_url.split('/').last
-  path = "/tmp/#{name}"
-
-  if !File.exists?(path)
-    `curl -s #{photo_url} > #{path}`
-    set_desktop(path)
-  end
+  set_desktop_from_url(photo_url)
 end
 
 def get_from(source)
