@@ -65,4 +65,13 @@ def get_from_tumblr(blogname)
   end
 end
 
-get_from_tumblr(BLOG_NAME)
+def get_from(source)
+  case source
+  when :tumblr; get_from_tumblr(BLOG_NAME)
+  else
+    puts "Unknown source: #{source}"
+    exit
+  end
+end
+
+get_from(options.source)
