@@ -1,0 +1,12 @@
+Usage: ./nice_top.rb -s SOURCE [options]
+    -s, --source SOURCE              Select source (tumblr, wallbase)
+    -h, --help                       Print usage and options
+
+Tumblr options:
+    -b, --blog BLOG                  Tumblr blog URL
+
+Wallbase options:
+    -q, --query QUERY                Specify search query
+        --allow-nsfw                 Allow NSFW images
+        --nsfw                       Get only NSFW images
+
