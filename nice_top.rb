@@ -8,7 +8,9 @@ require "optparse"
 require "ostruct"
 require "tempfile"
 
-@options = OpenStruct.new
+@options = OpenStruct.new(
+  :wallbase_sketch_level => "100"
+)
 options_parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{__FILE__} -s SOURCE [options]"
 
@@ -27,6 +29,14 @@ options_parser = OptionParser.new do |opts|
   opts.on("-q QUERY", "--query QUERY",
           "Specify search query when using --source wallbase") do |query|
     @options.query = query
+  end
+
+  opts.on("--allow-nsfw", "Allow NSFW images from --source wallbase") do
+    @options.wallbase_sketch_level = "110"
+  end
+
+  opts.on("--nsfw", "Return only NSFW images from --source wallbase") do
+    @options.wallbase_sketch_level = "010"
   end
 
   opts.on_tail("-h", "--help",
@@ -77,15 +87,16 @@ end
 
 WALLBASE_ROOT = "http://wallbase.cc/search"
 
-def get_random_from_wallbase(query)
+def get_random_from_wallbase(options)
   results = HTTParty.post(WALLBASE_ROOT, {
     :body => {
-      :query   => query,
+      :query   => options.query,
       :orderby => :random,
       :res_opt => :gteq,
       :res     => '2560x1600',
       :aspect  => 1.6,
-      :thpp    => 20
+      :thpp    => 20,
+      :nsfw    => options.wallbase_sketch_level
     }
   })
   doc = Nokogiri::HTML(results.body)
@@ -126,8 +137,8 @@ def get_image_from_wallbase_detail(detail_url)
   decode_wallbase(encoded)
 end
 
-def get_from_wallbase(query)
-  detail_url = get_random_from_wallbase(query)
+def get_from_wallbase(options)
+  detail_url = get_random_from_wallbase(options)
   unless detail_url
     puts "Nothing found for #{query}"
     exit
@@ -142,7 +153,7 @@ def get_from(source)
     raise OptionParser::MissingArgument.new("--blog") unless @options.blog
     get_from_tumblr(@options.blog)
   when :wallbase
-    get_from_wallbase(@options.query)
+    get_from_wallbase(@options)
   else
     puts "Unknown source: #{source}"
     exit
