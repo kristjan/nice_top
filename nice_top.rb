@@ -33,8 +33,6 @@ options_parser = OptionParser.new do |opts|
   opts.parse!
 end
 
-p @options
-
 raise OptionParser::MissingArgument.new("--source") unless @options.source
 
 SET_DESKTOP = <<-SCRIPT
