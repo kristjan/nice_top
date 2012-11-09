@@ -6,7 +6,7 @@ require "httparty"
 require "optparse"
 require "ostruct"
 
-options = OpenStruct.new
+@options = OpenStruct.new
 options_parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{__FILE__} -s SOURCE [options]"
 
@@ -14,7 +14,12 @@ options_parser = OptionParser.new do |opts|
 
   opts.on("-s SOURCE", "--source SOURCE", [:tumblr],
           "Select source (tumblr)") do |source|
-    options.source = source
+    @options.source = source
+  end
+
+  opts.on("-b BLOG", "--blog BLOG",
+          "Tumblr blog URL when using --source tumblr") do |blog|
+    @options.blog = blog
   end
 
   opts.on_tail("-h", "--help",
@@ -26,13 +31,9 @@ options_parser = OptionParser.new do |opts|
   opts.parse!
 end
 
-p options
+p @options
 
-raise OptionParser::MissingArgument.new("--source") unless options.source
-
-TUMBLR_API_BASE = "https://api.tumblr.com/v2"
-BLOG_NAME = "fuckyeahprettyplaces.tumblr.com"
-POSTS_PATH = "/blog/#{BLOG_NAME}/posts"
+raise OptionParser::MissingArgument.new("--source") unless @options.source
 
 SET_DESKTOP = <<-SCRIPT
   on run argv
@@ -47,8 +48,12 @@ def set_desktop(image_path)
   `osascript #{args} #{image_path}`
 end
 
-def get_from_tumblr(blogname)
-  photos = HTTParty.get(TUMBLR_API_BASE + POSTS_PATH, {
+TUMBLR_API_BASE = "https://api.tumblr.com/v2"
+
+def get_from_tumblr(blog)
+  blog += '.tumblr.com' unless blog.include?('.')
+  posts = TUMBLR_API_BASE + "/blog/#{blog}/posts"
+  photos = HTTParty.get(posts, {
     :query => {
       :api_key => ENV["TUMBLR_API_KEY"],
       :limit => 1
@@ -67,11 +72,13 @@ end
 
 def get_from(source)
   case source
-  when :tumblr; get_from_tumblr(BLOG_NAME)
+  when :tumblr
+    raise OptionParser::MissingArgument.new("--blog") unless @options.blog
+    get_from_tumblr(@options.blog)
   else
     puts "Unknown source: #{source}"
     exit
   end
 end
 
-get_from(options.source)
+get_from(@options.source)
