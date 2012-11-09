@@ -20,19 +20,22 @@ def set_desktop(image_path)
   `osascript #{args} #{image_path}`
 end
 
-photos = HTTParty.get(TUMBLR_API_BASE + POSTS_PATH, {
-  :query => {
-    :api_key => ENV["TUMBLR_API_KEY"],
-    :limit => 1
-  }
-})["response"]["posts"].first["photos"]
+def get_from_tumblr(blogname)
+  photos = HTTParty.get(TUMBLR_API_BASE + POSTS_PATH, {
+    :query => {
+      :api_key => ENV["TUMBLR_API_KEY"],
+      :limit => 1
+    }
+  })["response"]["posts"].first["photos"]
 
-photo_url = photos.first["original_size"]["url"]
-name = photo_url.split('/').last
-path = "/tmp/#{name}"
+  photo_url = photos.first["original_size"]["url"]
+  name = photo_url.split('/').last
+  path = "/tmp/#{name}"
 
-if !File.exists?(path)
-  `curl -s #{photo_url} > #{path}`
-  set_desktop(path)
+  if !File.exists?(path)
+    `curl -s #{photo_url} > #{path}`
+    set_desktop(path)
+  end
 end
 
+get_from_tumblr(BLOG_NAME)
