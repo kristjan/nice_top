@@ -7,12 +7,12 @@ require "optparse"
 require "ostruct"
 
 options = OpenStruct.new
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{__FILE__} -s <source> [options]"
+options_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{__FILE__} -s SOURCE [options]"
 
   opts.separator ""
 
-  opts.on("-s", "--source", [:tumblr],
+  opts.on("-s SOURCE", "--source SOURCE", [:tumblr],
           "Select source (tumblr)") do |source|
     options.source = source
   end
@@ -25,6 +25,10 @@ OptionParser.new do |opts|
 
   opts.parse!
 end
+
+p options
+
+raise OptionParser::MissingArgument.new("--source") unless options.source
 
 TUMBLR_API_BASE = "https://api.tumblr.com/v2"
 BLOG_NAME = "fuckyeahprettyplaces.tumblr.com"
