@@ -3,6 +3,29 @@
 require "rubygems"
 require "httparty"
 
+require "optparse"
+require "ostruct"
+
+options = OpenStruct.new
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{__FILE__} -s <source> [options]"
+
+  opts.separator ""
+
+  opts.on("-s", "--source", [:tumblr],
+          "Select source (tumblr)") do |source|
+    options.source = source
+  end
+
+  opts.on_tail("-h", "--help",
+          "Print usage and options") do
+    p opts
+    exit
+  end
+
+  opts.parse!
+end
+
 TUMBLR_API_BASE = "https://api.tumblr.com/v2"
 BLOG_NAME = "fuckyeahprettyplaces.tumblr.com"
 POSTS_PATH = "/blog/#{BLOG_NAME}/posts"
