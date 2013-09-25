@@ -148,7 +148,7 @@ end
 def get_from_wallbase(options)
   detail_url = get_random_from_wallbase(options)
   unless detail_url
-    puts "Nothing found for #{query}"
+    puts "Nothing found for #{options.query}"
     exit
   end
   image_url = get_image_from_wallbase_detail(detail_url)
