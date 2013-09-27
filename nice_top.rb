@@ -112,39 +112,6 @@ def get_random_from_wallbase(options)
   thumbnail.attributes["data-original"].value if thumbnail
 end
 
-WALLBASE_MIXER =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-def decode_wallbase(encoded)
-  result = []
-
-  encoded.chars.each_slice(4) do |group|
-    f, g, h, i = group.map{|char| WALLBASE_MIXER.index(char)}
-
-    j = f << 18 | g << 12 | h << 6 | i
-    c = j >> 16 & 255
-    d = j >> 8 & 255
-    e = j & 255
-
-    if h == 64
-      result.push c
-    elsif i == 64
-      result.push c, d
-    else
-      result.push c, d, e
-    end
-  end
-
-  result.map(&:chr).join
-end
-
-def get_image_from_wallbase_detail(detail_url)
-  detail = HTTParty.get(detail_url)
-  doc = Nokogiri::HTML(detail)
-  script = doc.css('#bigwall').to_s
-  encoded = script.match(/B\('([^']+)'\)/)[1]
-  decode_wallbase(encoded)
-end
-
 WALLBASE_IMAGE_BASE   = 'http://wallpapers.wallbase.cc/rozne/wallpaper'
 WALLBASE_THUMBNAIL_RE = %r[thumbs\.wallbase\.cc/+rozne/thumb-(\d+)\.jpg]
 
