@@ -93,23 +93,23 @@ def get_from_tumblr(blog)
   set_desktop_from_url(photo_url)
 end
 
-WALLBASE_ROOT = "http://wallbase.cc/search"
+WALLBASE_SEARCH = "http://wallbase.cc/search"
 
 def get_random_from_wallbase(options)
-  results = HTTParty.post(WALLBASE_ROOT, {
-    :body => {
-      :query   => options.query,
-      :orderby => :random,
-      :res_opt => :gteq,
-      :res     => '2560x1600',
-      :aspect  => 1.6,
-      :thpp    => 20,
-      :nsfw    => options.wallbase_sketch_level
+  results = HTTParty.get(WALLBASE_SEARCH, {
+    :query => {
+      :q          => options.query,
+      :section    => :wallpapers,
+      :order      => :random,
+      :res_opt    => :gteq,
+      :res        => '1680x1050',
+      :aspect     => 1.6,
+      :purity     => options.wallbase_sketch_level,
     }
   })
   doc = Nokogiri::HTML(results.body)
-  thumbnail_link = doc.css('.thumb a.thlink').first
-  thumbnail_link.attributes["href"] if thumbnail_link
+  thumbnail = doc.css('.thumbnail img.file').first
+  thumbnail.attributes["data-original"].value if thumbnail
 end
 
 WALLBASE_MIXER =
@@ -145,13 +145,13 @@ def get_image_from_wallbase_detail(detail_url)
   decode_wallbase(encoded)
 end
 
+WALLBASE_IMAGE_BASE   = 'http://wallpapers.wallbase.cc/rozne/wallpaper'
+WALLBASE_THUMBNAIL_RE = %r[thumbs\.wallbase\.cc/+rozne/thumb-(\d+)\.jpg]
+
 def get_from_wallbase(options)
-  detail_url = get_random_from_wallbase(options)
-  unless detail_url
-    puts "Nothing found for #{options.query}"
-    exit
-  end
-  image_url = get_image_from_wallbase_detail(detail_url)
+  thumbnail_url = get_random_from_wallbase(options)
+  image_id = thumbnail_url.match(WALLBASE_THUMBNAIL_RE)[1]
+  image_url = "#{WALLBASE_IMAGE_BASE}-#{image_id}.jpg"
   set_desktop_from_url(image_url)
 end
 
